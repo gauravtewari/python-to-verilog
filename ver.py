@@ -13,6 +13,9 @@ def num_bits(num):
     return nbits
 
 
+'''
+Generates the Verilog Source code for given state machine
+'''
 class verCode:
     def __init__(self, sm, name='source'):
         self.source = name
@@ -25,23 +28,19 @@ class verCode:
         self.numbits = 0
         try:
             self.src_out = open(self.source+".v", 'w')
-            self.tb_out = open(self.source+"_tb.v", 'w')
         except IOError:
-            print("Error opening files")
+            print("Error opening file")
             sys.exit(1)
-        #print("Inside Cons")
         self.parse_sm()
 
     def source_file(self):
         return self.source+".v"
 
-    def tb_file(self):
-        return self.source+"_tb.v"
-
     def conf_file(self):
         return self.conf
 
     # parse sections from state machine configuration file
+	# For a given section in a config file, returns the key value pairs as a python dict
     def config_sec(self, section):
         dict1 = {}
         options = self.config.options(section)
@@ -56,44 +55,52 @@ class verCode:
         return dict1
 
     # parse the state machine configuration file
+    # Extracts the Moore type state machine parameters from given configuration file
     def parse_sm(self):
-        #print("Inside parse")
+		
+		# Initialize the parser
         self.config = configparser.ConfigParser()
+		# Read the configuration file
         self.config.read(self.conf)
+        # Check if states are present in configuration file
         if 'states' not in self.config.sections():
             print("Error parsing config file: States not found");
             sys.exit(1);
+        # Check if transitions are present in configuration file
         if 'transitions' not in self.config.sections():
             print("Error transitions not found in config file")
             sys.exit(0);
+        # Check if IDLE state configuration is present
         if 'idle' not in self.config.sections():
             print("Error no idle state transitions found in config file")
             sys.exit(0);
-        #for sections in self.config.sections():
-        #print(sections)
-        # get the states from configuration file
+	
+        # Get the states from configuration file
         self.states = self.config_sec('states');
-        # get the transitions for each states
+        
+        # Get the transitions for each states
         self.transitions = self.config_sec('transitions');
+        
+        # Get the IDLE state information and do sanitory checks
         self.idle = self.config_sec('idle');
         if self.idle['next'] not in self.states.keys():
             print("Next state for idle is not in given state values")
             sys.exit(1)
-        # for each states update the transition table
+        
+        # Check whether there is transition for each state.
+        # Transitions dict contains transition values for each state key.
+        # Split the transitions as separte items of a list
         for key in self.states.keys():
-            #print("State {}".format(key))
-            #check if there is transition for this state
             if key not in self.transitions.keys():
                 print("Transition not found for {}".format(key))
                 sys.exit(1)
             # for a list of transitions
             self.transitions[key] = self.transitions[key].split();
-        #print("Transitions");
-        #print(self.transitions)
-        #print(self.idle)
+		
+		# Number of bits required to store the states
         self.numbits = num_bits(len(self.states.keys())+1)
         
-        #print the state in verilog source file
+    # Print the if construct.
     def print_if(self, in_val, x_val, next_state, level, f=sys.stdout):
         for i in range(level):
             print("\t", end='', file=f)
@@ -106,6 +113,8 @@ class verCode:
         for i in range(level):
             print("\t", end='', file=f)
         print("\tstate = {};".format(next_state), file=f)
+        
+    # Print the else if construct in verilog
     def print_elif(self, in_val, x_val, next_state, level, f=sys.stdout):
         for i in range(level):
             print("\t", end='', file=f )
@@ -118,6 +127,8 @@ class verCode:
         for i in range(level):
             print("\t", end='', file=f )
         print("\tstate = {};".format(next_state), file=f )
+    
+    # Print the else construct in verilog
     def print_else(self, next_state, level, f=sys.stdout):
         for i in range(level):
             print("\t", end='', file=f )
@@ -126,6 +137,7 @@ class verCode:
             print("\t", end='', file=f )
         print("\tstate = {};".format(next_state), file=f )
 
+	# Print the state transition code in verilog source file
     def print_state(self, level, f=sys.stdout):
         for i in range(level):
             print("\t", end='', file=f)
@@ -154,6 +166,7 @@ class verCode:
                     self.print_elif(in_val, x_val, next_state, level+1, f)
             self.print_else(key, level+1, f)
     
+    # Print the next state always block in verilog source file
     def next_state_logic(self):
         print("\n/* Next state logic */", file=self.src_out)
         print("always @(posedge {} or negedge {}) begin".format(self.in_ports[0], self.in_ports[1]), file = self.src_out)
@@ -163,6 +176,7 @@ class verCode:
         print("\t\tendcase",file=self.src_out)
         print("end",file=self.src_out)
     
+    # Print the state parameter declaration
     def print_state_params(self):
         print("\nreg [{}:0] state;".format(self.numbits-1), file=self.src_out)
         print("parameter\tidle = 0,", file=self.src_out)
@@ -173,6 +187,7 @@ class verCode:
             count = count+1
         print("\t\t{0} = {1:d};".format(l[-1], count), file=self.src_out)
     
+    # Print the output always construct for state machine in verilog source file
     def out_logic(self, level, f=sys.stdout):
         l = sorted(self.states.keys())
         for i in l:
@@ -188,7 +203,8 @@ class verCode:
         print("\t\tidle:\n\t\t\tout = 1'b{};".format(self.idle['out']), file=self.src_out)
         self.out_logic(2, self.src_out)
         print("\tendcase\nend", file=self.src_out)
-        
+    
+    # Generate the Verilog Source File
     def print_source(self):
         self.module_header();
         self.print_state_params();
@@ -211,6 +227,8 @@ class verCode:
         for i in range(len(self.out_ports)-1):
             print('\toutput reg {}'.format(out_ports[i]), end=',\n', file=self.src_out)
         print('\toutput reg {}\n);'.format(self.out_ports[-1]),file=self.src_out)
+    
     # print end module in verilog source file
     def module_footer(self):
         print('endmodule', file=self.src_out)
+

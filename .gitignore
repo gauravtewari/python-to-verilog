@@ -1,4 +1,7 @@
-test/test.out
-test/test.vcd
+test/*.out
+test/*.vcd
 *.pyc
+*.v
+!tb.v 
+*~
 output
