@@ -4,11 +4,11 @@ The python program takes a configuration file describing a State Machine and gen
 
 How to Run
 ----------
-To generate the source file:
-	./main.py -s sm_conf -m module_name
-To compile the verilog file using icarus verilog
-	iverilog -o output module.v tb.v
-	vvp output
-To view the waveform in gtkwave
-	gtkwave test/test.vcd
+To generate the source file:<br>
+	./main.py -s sm_conf -m module_name<br>
+To compile the verilog file using icarus verilog<br>
+	iverilog -o output module.v tb.v<br>
+	vvp output<br>
+To view the waveform in gtkwave<br>
+	gtkwave test/test.vcd<br>
 
