@@ -1,6 +1,9 @@
 module main;
 
 `define CYCLE 10
+`define test_in  "test/test.in"
+`define test_out  "test/test.out"
+`define wave_out  "test/test.vcd"
 
 reg in, x;
 reg reset_n;
@@ -21,7 +24,7 @@ initial begin
 end
 
 initial begin
-	$dumpfile("test/test.vcd");
+	$dumpfile(`wave_out);
 	$dumpvars(0, main);
 end
 
@@ -29,8 +32,8 @@ initial begin
 	in = 1'b0;
 	x = 1'b0;
 	reset_n = 1'b0;
-	fin = $fopenr("test/test.in");
-	fout = $fopenw("test/test.out");
+	fin = $fopenr(`test_in);
+	fout = $fopenw(`test_out);
 	if(!fin || !fout) begin
 		$display("Can't Open files");
 		$finish();
