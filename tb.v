@@ -1,9 +1,12 @@
-module main;
+`timescale 1ns/1ns
 
 `define CYCLE 10
+`define module_name source
 `define test_in  "test/test.in"
 `define test_out  "test/test.out"
 `define wave_out  "test/test.vcd"
+
+module main;
 
 reg in, x;
 reg reset_n;
@@ -13,7 +16,7 @@ reg clock;
 integer fin, fout, count;
 
 /* Design Under Test */
-source dut (.clock(clock), .in(in), .x(x), .reset_n(reset_n), .out(out));
+`module_name dut (.clock(clock), .in(in), .x(x), .reset_n(reset_n), .out(out));
 
 initial begin
  clock = 1'b0;
