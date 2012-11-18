@@ -1,0 +1,1 @@
+The python program takes a configuration file describing a State Macine and genertes a source file and a verilog testbench file for the same.
