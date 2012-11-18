@@ -1,0 +1,4 @@
+test/test.out
+test/test.vcd
+*.pyc
+output
